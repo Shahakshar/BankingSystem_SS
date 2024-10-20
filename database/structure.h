@@ -153,6 +153,12 @@ char balance_from_account_after_transaction[15];
 
 };
 
+struct session {
+	char loginId[50];
+	char password[20];
+	bool isActive;
+	long int login_time;
+};
 
 
 

@@ -9,7 +9,6 @@
 
 // Forward declarations for functions you need to define
 
-
 void handle_client(int clientSocket) {
     
     int bytes_received;
@@ -30,10 +29,10 @@ void handle_client(int clientSocket) {
 
         bytes_received = read(clientSocket, buffer, sizeof(buffer));
 
-
         if (bytes_received <= 0) {
             break;  // Client disconnected or error occurred.
         }
+        
         buffer[bytes_received]='\0';
         int retIndex = atoi(buffer);
 
@@ -49,9 +48,7 @@ void handle_client(int clientSocket) {
                          managerHandle(clientSocket);
                 break;
             case 4:      
-            
                          adminHandle(clientSocket);
-                         
                 break;
                
             default:
