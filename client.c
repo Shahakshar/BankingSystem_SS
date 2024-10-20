@@ -4,14 +4,55 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <stdbool.h>
+#include <termios.h>
+
 
 
 #define BUFFER_SIZE 1024
+
+// Function to hide terminal input
+void hideInput() {
+    struct termios tty;
+    
+    // Get the current terminal attributes
+    tcgetattr(STDIN_FILENO, &tty);
+    
+    // Disable echoing of input characters
+    tty.c_lflag &= ~ECHO;
+    
+    // Set the modified attributes
+    tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+
+
+
+
+void showInput() {
+    struct termios tty;
+
+    // Get the current terminal attributes
+    tcgetattr(STDIN_FILENO, &tty);
+    
+    // Enable echoing of input characters
+    tty.c_lflag |= ECHO;
+    
+    // Set the modified attributes
+    tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+
+
+
+
+
+
+
 
 int main() {
     int clientSocket;
     int PORT;
     char port_buffer[10];
+    bool flag=false;
     struct sockaddr_in serverAddress;
 
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -38,6 +79,7 @@ int main() {
         close(clientSocket);
         exit(1);
     }
+    
     printf("You are Now Connected to the server\n");
     while (1) {
         // Receive data from the server
@@ -55,13 +97,41 @@ int main() {
         printf(">%s", buffer);
 
         // Send a response (optional if no input is expected by client e.g in case of view course)
+        
+        
+        
+        
+        if(strcmp(buffer,"Password\n")==0) {
+        
+            flag = true; 
+            hideInput();
+            
+        
+        }
+        
         char message[1024];
         printf("\n>");
         memset(message, 0, sizeof(message));
         fgets(message, sizeof(message), stdin);
-
+        
+        
+        
+        
+        
+        
+        
+        
+        
         // Clean the input and response buffers
-        message[strlen(message) - 1] = '\0';  // Remove the newline character
+        message[strlen(message) - 1] = '\0';  
+        // Remove the newline character
+        
+        if(flag==true){
+          
+          flag=false;
+          showInput();
+          
+        }
 
         // Send the message to the server
         send(clientSocket, message, strlen(message), 0);

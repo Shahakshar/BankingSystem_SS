@@ -7,8 +7,9 @@
 #include <netinet/in.h>
 #include "header/bank_employee.h"
 
-
 // Forward declarations for functions you need to define
+
+
 void handle_client(int clientSocket) {
     
     int bytes_received;
@@ -47,8 +48,10 @@ void handle_client(int clientSocket) {
             case 3:
                          managerHandle(clientSocket);
                 break;
-            case 4:
+            case 4:      
+            
                          adminHandle(clientSocket);
+                         
                 break;
                
             default:
@@ -101,7 +104,7 @@ int main() {
     }
 
     // Listen for incoming connections
-    if (listen(server_socket, 5) == -1) {
+    if (listen(server_socket, 10) == -1) {
         perror("Listening failed");
         close(server_socket);
         exit(1);
