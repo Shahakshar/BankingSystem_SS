@@ -86,7 +86,12 @@ int recordoff=0;
     }
     cust.loginId[readResult] = '\0';
     
+    if(isOnline(cust.loginId)){
     
+         send(clientSocket, "ID Already Logged in\n", strlen("ID Already Logged in\n"), 0);
+         return false;
+    
+    }
     
     
     send(clientSocket, "Password\n", strlen("Password\n"), 0);
@@ -141,6 +146,7 @@ while (read(openFD, &temp, sizeof(temp)) > 0)
     
    	   strcpy(temporary3.loginId, temp.loginId);
    	   strcpy(temporary3.password, temp.password);
+   	   add_session(temporary3.loginId);
    	   close(openFD);
    	   return true;
    	       
@@ -179,7 +185,11 @@ while (read(openFD, &temp, sizeof(temp)) > 0)
 
 
 
+void logout2(int clientSocket){
 
+   remove_session(temporary3.loginId);
+
+}
 
 
 
@@ -263,6 +273,12 @@ bool customerHandle(int clientSocket) {
           	viewTransactionHistory1(clientSocket);
           	//printf("activated\n");
             break;
+            
+          case 9:
+          	logout2(clientSocket);
+          	return true;
+            break;
+          
           
            default:
             return true; 

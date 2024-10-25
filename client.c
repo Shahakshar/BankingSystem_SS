@@ -7,8 +7,6 @@
 #include <stdbool.h>
 #include <termios.h>
 
-
-
 #define BUFFER_SIZE 1024
 
 // Function to hide terminal input
@@ -37,6 +35,7 @@ void showInput() {
     // Set the modified attributes
     tcsetattr(STDIN_FILENO, TCSANOW, &tty);
 }
+
 
 int main() {
     int clientSocket;
@@ -87,6 +86,10 @@ int main() {
         printf(">%s", buffer);
 
         // Send a response (optional if no input is expected by client e.g in case of view course)
+        
+        
+        
+        
         if(strcmp(buffer,"Password\n")==0) {
         
             flag = true; 
@@ -99,6 +102,7 @@ int main() {
         printf("\n>");
         memset(message, 0, sizeof(message));
         fgets(message, sizeof(message), stdin);
+        
         
         // Clean the input and response buffers
         message[strlen(message) - 1] = '\0';  

@@ -1,1 +1,8 @@
-/database/check.c
+database/check.c
+database/Dummy_data.xlsx
+database/a.out
+database/add_admin.c
+database/database_show.c
+database/deleteContent
+database/deleteContent.c
+database/initialise.c

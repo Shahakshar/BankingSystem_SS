@@ -9,6 +9,7 @@
 struct userCred temporary;
 char acc_name[50];
 
+  
 int addEmployee(int clientSocket);
 void viewEmployee(int clientSocket);
 int addCustomer(int clientSocket);
@@ -20,47 +21,17 @@ void modifyCustomer(int clientSocket);
 void modifyAccount(int clientSocket);
 void addAdmin(int clientSocket);
 void manage_user_roles(int clientSocket);
-bool checkUserExist(int clientSocket, struct admin);
-bool check_login_session(int clientSocket, struct admin);
-int sendPromptAndReceiveResponse(int , const char *, char *, size_t );
 
-void logout(struct admin adm) {
-	struct session us;
-	int openFD = open("database/user_session.txt", O_RDWR | O_CREAT, 0644);
 
-    	if (openFD == -1) {
-		perror("Error opening file");
-		return;
-	}	
 
-	bool found = false; // Initialize found to false
-	
-	lseek(openFD, 0, SEEK_SET);
-	struct flock mylock;
-	mylock.l_type = F_RDLCK;
-	mylock.l_whence = SEEK_SET;
-	mylock.l_start = 0;
-	mylock.l_len = 0;
-	mylock.l_pid = getpid();
 
-	fcntl(openFD, F_SETLKW, &mylock);
-	while (read(openFD, &us, sizeof(us)) > 0) {
-		if (strcmp(us.loginId, adm.loginId) == 0) {
-			found = true;
-			us.isActive = false;
-			lseek(openFD, -sizeof(us), SEEK_CUR); // Move file pointer back to update the record
-                	write(openFD, &us, sizeof(us));
-                	break;
-                }
-	}
-	
-	mylock.l_type = F_UNLCK;
-	fcntl(openFD, F_SETLKW, &mylock);
-	close(openFD);
-		
-}
+
+
+
+
 
 void changePasswordAdmin(int clientSocket){
+
 
     struct admin adm,temp;
     memset(adm.loginId,'\0', sizeof(adm.loginId));
@@ -92,6 +63,10 @@ void changePasswordAdmin(int clientSocket){
     lseek(openFD, 0, SEEK_SET);
     struct flock mylock;
     
+    
+    
+    
+    
     while (read(openFD, &temp, sizeof(temp)) > 0) 
      {
 
@@ -109,7 +84,10 @@ void changePasswordAdmin(int clientSocket){
         {
         
          // if the login id matched but the password is not matched, then
-         found = true; 
+         found = true;
+       
+        
+           
              if (found) 
              {
                // then change the changed password to be written at this place
@@ -152,59 +130,196 @@ void changePasswordAdmin(int clientSocket){
        
 }
 
-
-bool admin_authenticate_1(int clientSocket, struct admin *user){
-	struct admin adm;
-	
-	// taking loginId and password
-	send(clientSocket, "Enter Admin ID: ", strlen("Enter Admin ID: "), 0);
-	int readResult = read(clientSocket, adm.loginId, sizeof(adm.loginId) - 1);
-
-	if (readResult <= 0) {
-		send(clientSocket, "Error", strlen("Error"), 0);
-		return false;
-	}
-	adm.loginId[readResult] = '\0';
+int sendPromptAndReceiveResponse(int , const char *, char *, size_t );
 
 
 
-	send(clientSocket, "Password\n", strlen("Password\n"), 0);
-	readResult = read(clientSocket, adm.password, sizeof(adm.password) - 1);
 
-	if (readResult <= 0) {
-		send(clientSocket, "Error", strlen("Error"), 0);
-		return false;
-	}
-	adm.password[readResult] = '\0';
-	
-    /*if (sendPromptAndReceiveResponse(clientSocket, "Enter Admin User ID: ", adm.loginId, sizeof(adm.loginId)) == -1) {
-        close(clientSocket);
+
+
+
+
+
+
+
+
+
+
+
+
+
+bool admin_authenticate_1(int clientSocket){
+struct admin adm, temp;
+int openFD = open("database/admin_database.txt", O_RDWR, 0744); // Open in read-only mode
+int recordoff=0;
+
+    if (openFD == -1) {
+        perror("Error opening file");
         return false;
     }
-    if (sendPromptAndReceiveResponse(clientSocket, "Enter Admin Password: ", adm.password, sizeof(adm.password)) == -1) {
-        close(clientSocket);
+
+    bool found = false; // Initialize found to false
+
+    char buffer[1024]; // Declare buffer for sending data
+    memset(buffer, '\0', sizeof(buffer));
+    
+    
+    
+    
+/* 
+The below is taking login id and password from the client
+*/    
+
+    send(clientSocket, "Enter Admin ID: ", strlen("Enter Admin ID: "), 0);
+    int readResult = read(clientSocket, adm.loginId, sizeof(adm.loginId) - 1);
+
+    if (readResult <= 0) {
+        send(clientSocket, "Error receiving Admin ID from server", strlen("Error receiving Admin ID from server"), 0);
         return false;
-    }*/
-	strcpy(user->loginId, adm.loginId);
-	strcpy(user->password, adm.password);
+    }
+    adm.loginId[readResult] = '\0';
+    
+    if(isOnline(adm.loginId)){
+    
+         send(clientSocket, "Admin Already Logged in\n", strlen("Admin Already Logged in\n"), 0);
+         return false;
+    
+    }
+    
+    
+    
+    
+    send(clientSocket, "Password\n", strlen("Password\n"), 0);
+     readResult = read(clientSocket, adm.password, sizeof(adm.password) - 1);
 
-	if(checkUserExist(clientSocket, adm) && check_login_session(clientSocket, adm)){
-		return true;
-	}
-	else{
-		send(clientSocket, "Login Failed: ", strlen("Login Failed "), 0);
-		return false;
-	}
+    if (readResult <= 0) {
+        send(clientSocket, "Error receiving Admin Password from server", strlen("Error receiving Admin Password from server"), 0);
+        return false;
+    }
+    adm.password[readResult] = '\0';
+    
+    
+    
+    
+    
+    
+    
+    
+   
+   
+    
+
+    // Reset the file pointer to the beginning of the file
+    lseek(openFD, 0, SEEK_SET);
+    struct flock mylock;
+    
+    
+    
+while (read(openFD, &temp, sizeof(temp)) > 0) 
+     {
+
+        mylock.l_type = F_WRLCK;
+        mylock.l_whence = SEEK_SET;
+        mylock.l_start = recordoff;
+        mylock.l_len = sizeof(struct admin);
+        
+          // Lock the record
+        if (fcntl(openFD, F_SETLKW, &mylock) == -1) {
+            perror("Error locking record");
+            exit(1);
+        }
+
+
+        
+        //This checks whther my login id is matching or not
+        if (   strcmp(adm.loginId, temp.loginId) == 0) 
+        {
+        
+         if (   strcmp(adm.password, temp.password) != 0)
+          {
+         	 found=true;// vague logic to not to stucj after break
+         	 close(openFD); 
+             send(clientSocket, "Login Id was correct\nPassword error\nTry Logging Again\n\n", strlen("Login Id was correct\nPassword error\nTry Logging Again\n\n"),0);
+             break; 
+         
+         }
+        // if the login id matched but the password is not matched, then
+         found = true;
+       
+        
+           
+             if (found) 
+             {
+               memset(temporary.loginId,'\0',sizeof(temporary.loginId));
+               memset(temporary.password,'\0',sizeof(temporary.password));        
+    
+   	   strcpy(temporary.loginId, temp.loginId);
+   	   strcpy(temporary.password, temp.password);
+   	   add_session(temporary.loginId);
+   	   return true;
+   	       
+    	  
+             }
+
+            break;
+        }
+
+      
+        // Unlock the record after processing
+        mylock.l_type = F_UNLCK;
+        if (fcntl(openFD, F_SETLK, &mylock) == -1) {
+            perror("Error unlocking record");
+            exit(1);
+        }
+
+        recordoff += sizeof(struct customer);
+    }
+
+    if(found==false) {
+        send(clientSocket, "Account not found\n", strlen("Account not found\n"),0);
+    }
+
+    close(openFD); // Close the file after use
+    return false;
 }
 
-void sendMsg(int clientSocket) {
-	char buffer[1024] = "Invalid Input\n";
-	send(clientSocket, &buffer, sizeof(buffer), 0);
+
+
+
+
+
+
+void logout1(int clientSocket){
+
+   remove_session(temporary.loginId);
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool adminHandle(int clientSocket) {
-	struct admin adm;
-    if (admin_authenticate_1(clientSocket, &adm)) {
+    
+    if (admin_authenticate_1(clientSocket)) {
     char readbuff[1024];
         send(clientSocket, "Logged in Successfully\n", strlen("Logged in Successfully\n"), 0);
        while(true){
@@ -241,6 +356,7 @@ bool adminHandle(int clientSocket) {
 
         int choice = atoi(readbuff);
          //send(clientSocket, readbuff, sizeof(readbuff), 0);
+
         switch (choice) {
             case 1:
                 addEmployee(clientSocket) ;
@@ -264,35 +380,45 @@ bool adminHandle(int clientSocket) {
           	//printf("Blocked\n");
           break;
           case 7:
-           	modifyEmployee(clientSocket);  
-      		break;  
+           modifyEmployee(clientSocket);  
+      break;  
           case 8:
-           	modifyCustomer(clientSocket);  
-      		break; 
-      	  case 9:
-           	modifyAccount(clientSocket);  
-      		break; 
-      	  case 10:
-           	changePasswordAdmin(clientSocket);  
-      		break; 
-          case 11:
-           	addAdmin(clientSocket);  
-		break; 
-      	  case 12:
-           	manage_user_roles(clientSocket);  
-           	break;
-      	  case 13: 
-            	logout(adm);
-            	return true; 
+           modifyCustomer(clientSocket);  
+      break; 
+      case 9:
+           modifyAccount(clientSocket);  
+      break; 
+      case 10:
+           changePasswordAdmin(clientSocket);  
+      break; 
+      case 11:
+           addAdmin(clientSocket);  
+      break; 
+      case 12:
+           manage_user_roles(clientSocket);  
+      break; 
+      case 13:
+           logout1(clientSocket);  
+           return true;
+      break; 
+            default:
+            return true; 
                 break;
-     	default: 
-            	sendMsg(clientSocket);
-            	break;
         }
       }
     }
     return false;
 }
+
+
+
+
+
+
+
+
+
+
 
 int sendPromptAndReceiveResponse(int clientSocket, const char *prompt, char *response, size_t responseSize) {
     send(clientSocket, prompt, strlen(prompt), 0);
@@ -383,7 +509,7 @@ int addEmployee(int clientSocket) {
     }
     
     //sprintf(emp.position,"emp");
-    //sprintf(emp.managerId,"MT2024014");
+    //sprintf(emp.managerId,"MT2024048");
     if (sendPromptAndReceiveResponse(clientSocket, "Enter Employee Position(emp or mng ): ", emp.position, sizeof(emp.position)) ==-1) {
         close(clientSocket);
         return 0;
@@ -680,27 +806,6 @@ void addAdmin(int clientSocket){
     return ; // Success
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void create_account_to_customer(int clientSocket ,char *id,  char *name){
  
     struct account acc;
@@ -889,32 +994,6 @@ struct flock mylock;
     return 1; // Success
     
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void modifyEmployee(int clientSocket) {
     int count=0;
@@ -1560,6 +1639,14 @@ void activateAccount(int clientSocket){
 }
 
 
+
+
+
+
+
+
+
+
 void manage_user_roles(int clientSocket){
 
   /*
@@ -1805,127 +1892,6 @@ void deactivateAccount(int clientSocket){
 
 }
 
-bool checkUserExist(int clientSocket, struct admin adm) {
-    int fd = open("database/admin_database.txt", O_RDONLY);
-    
-    if (fd == -1) {
-        perror("Error opening admin database");
-        return false;
-    }
-
-    struct flock lock;
-    lock.l_type = F_RDLCK;
-    lock.l_whence = SEEK_SET;
-    lock.l_start = 0;
-    lock.l_len = 0;   
-    lock.l_pid = getpid();
-    if (fcntl(fd, F_SETLKW, &lock) == -1) {
-        perror("Error locking the file");
-        close(fd);
-        return false;
-    }
-
-    struct admin tempAdmin;
-    bool found = false;
-    while (read(fd, &tempAdmin, sizeof(tempAdmin)) > 0) {
-        if (strcmp(tempAdmin.loginId, adm.loginId) == 0 && strcmp(tempAdmin.password, adm.password) == 0) {
-            found = true;
-            break;
-        }
-    }
-
-    lock.l_type = F_UNLCK;
-    if (fcntl(fd, F_SETLKW, &lock) == -1) {
-        perror("Error unlocking the file");
-    }
-
-    close(fd);
-    return found;
-}
-
-bool check_login_session(int clientSocket, struct admin adm) {
-	struct session us;
-	int openFD = open("database/user_session.txt", O_RDWR | O_CREAT, 0644);
-
-    	if (openFD == -1) {
-		perror("Error opening file");
-		return false;
-	}	
-
-    bool found = false; // Initialize found to false
-
-    char buffer[1024]=""; // Declare buffer for sending data
-    memset(buffer,'\0',sizeof(buffer));
-    
-    
-    // Reset the file pointer to the beginning of the file
-    lseek(openFD, 0, SEEK_SET);
-    
-    struct flock mylock;
-        mylock.l_type = F_RDLCK;
-        mylock.l_whence = SEEK_SET;
-        mylock.l_start = 0;
-        mylock.l_len = 0;
-        mylock.l_pid = getpid();
-    
-       fcntl(openFD, F_SETLKW, &mylock);
-    // Loop to search for the student in the file
-    while (read(openFD, &us, sizeof(us)) > 0) {
-    	if (strcmp(us.loginId, adm.loginId) == 0) {
-    		found = true;
-		// check timing and also user loggedin or not
-		long int curr_time = (long int)time(NULL);
-		double elapsedMinutes = (double) (curr_time - us.login_time) / 60.0;
-		
-		if (us.isActive && elapsedMinutes < 5) {
-			// send msg to user that already loggedin
-			strcpy(buffer, "Already LoggedIn!");
-			send(clientSocket, buffer, sizeof(buffer), 0);
-                	mylock.l_type = F_UNLCK;
-	                fcntl(openFD, F_SETLKW, &mylock);
-        	        close(openFD);
-        	        return false;
-		} else if (us.isActive && elapsedMinutes >= 5) {
-			// allow them to login
-			// update the field us.login_time
-			us.login_time = curr_time; // Update login time
-                	lseek(openFD, -sizeof(us), SEEK_CUR); // Move file pointer back to update the record
-                	write(openFD, &us, sizeof(us)); // Update session in the file
-	                strcpy(buffer, "Session timed out, relogin successful.");
-	                send(clientSocket, buffer, sizeof(buffer), 0);
-		} else {
-			// allow them to login
-			// update the field us.isActive and us.login_time
-			us.isActive = true;
-		        us.login_time = curr_time;
-		        lseek(openFD, -sizeof(us), SEEK_CUR);
-		        write(openFD, &us, sizeof(us));
-		}
-		break;		
-    	}
-    }
-    
-    if (!found) {
-        struct session newSession;
-        strcpy(newSession.loginId, adm.loginId);
-        strcpy(newSession.password, adm.password);
-        newSession.isActive = true;
-        newSession.login_time = (long int)time(NULL); 
-
-        write(openFD, &newSession, sizeof(newSession));
-        strcpy(buffer, "New login session created.");
-        send(clientSocket, buffer, sizeof(buffer), 0);
-        mylock.l_type = F_UNLCK;
-	fcntl(openFD, F_SETLKW, &mylock);
-	close(openFD);
-        return true;
-    }
-
-    mylock.l_type = F_UNLCK;
-    fcntl(openFD, F_SETLKW, &mylock);
-    close(openFD);
-    return true;
-}
 
 
 

@@ -7,6 +7,7 @@
 #include "manager.h"
 
 struct userCred temporary1;
+
 void addCustomerByEmployee(int clientSocket);
 void modifyCustomerByEmployee(int clientSocket);
 void processLoanApplication(int clientSocket);
@@ -15,20 +16,29 @@ void viewAssignedLoans(int clientSocket);
 void viewCustomerTransaction(int clientSocket);
 void viewCustomerTransaction1(int clientSocket);
 void changePasswordByEmployee(int clientSocket);
+
 bool employee_authenticate(int clientSocket){
 
 struct employee mng, temp;
 int openFD = open("database/employee_database.txt", O_RDWR, 0744); // Open in read-only mode
-	int recordoff=0;
+int recordoff=0;
     if (openFD == -1) {
         perror("Error opening file");
         return false;
     }
+
     bool found = false; // Initialize found to false
+
     char buffer[1024]; // Declare buffer for sending data
     memset(&buffer, '\0', sizeof(buffer));
     
-    // taking loginId and password
+    
+    
+    
+/* 
+The below is taking login id and password from the client
+*/    
+
     send(clientSocket, "Enter Employee ID: ", strlen("Enter Employee ID: "), 0);
     int readResult = read(clientSocket, mng.loginId, sizeof(mng.loginId) - 1);
 
@@ -38,6 +48,15 @@ int openFD = open("database/employee_database.txt", O_RDWR, 0744); // Open in re
     }
     mng.loginId[readResult] = '\0';
     
+    
+    
+    // checking whether the login is present or not
+    if(isOnline(mng.loginId)){
+    
+         send(clientSocket, "Employee ID Already Logged in\n", strlen("Employee ID Already Logged in\n"), 0);
+         return false;
+    
+    }
     
     
     send(clientSocket, "Password\n", strlen("Password\n"), 0);
@@ -83,7 +102,7 @@ while (read(openFD, &temp, sizeof(temp)) > 0)
          }
         // if the login id matched but the password is not matched, then
          found = true;
-       
+       //add_session(temporary1.loginId);
         
            
              if (found) 
@@ -94,6 +113,10 @@ while (read(openFD, &temp, sizeof(temp)) > 0)
    	   strcpy(temporary1.loginId, temp.loginId);
    	   strcpy(temporary1.password, temp.password);
    	   close(openFD);
+   	   
+   	   add_session(temporary1.loginId);
+   	   
+   	   
    	   return true;
    	       
     	  
@@ -126,8 +149,52 @@ while (read(openFD, &temp, sizeof(temp)) > 0)
     return false;
 }
 
+void logout(int clientSocket){
+
+   remove_session(temporary1.loginId);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool employeeHandle(int clientSocket) {
+    //if(!isOnline(temporary.loginId))
     if (employee_authenticate(clientSocket)) {
+    
+    
+    //ADD SESSSION
+    
+    
     char readbuff[1024];
         send(clientSocket, "Logged in Successfully\n", strlen("Logged in Successfully\n"), 0);
        while(true){
@@ -200,8 +267,13 @@ bool employeeHandle(int clientSocket) {
           case 8:
           	changePasswordCustomer(clientSocket);
           	
+          	
           break;
-       
+       case 9:
+          	logout(clientSocket);
+          	return true;
+          	
+          break;
            default:
             return true; 
                 break;
@@ -225,28 +297,6 @@ void modifyCustomerByEmployee(int clientSocket){
   //printf("Modify customer\n");
 
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void processLoanApplication(int clientSocket){
 
@@ -750,33 +800,6 @@ void viewCustomerTransaction1(int clientSocket) {
     close(openFD); // Close the file after use
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void changePasswordByEmployee(int clientSocket){
 
 
@@ -878,30 +901,3 @@ void changePasswordByEmployee(int clientSocket){
     return;
        
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

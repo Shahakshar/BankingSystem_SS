@@ -48,6 +48,12 @@ The below is taking login id and password from the client
         return false;
     }
     mng.loginId[readResult] = '\0';
+    if(isOnline(mng.loginId)){
+    
+         send(clientSocket, "ID Already Logged in\n", strlen("ID Already Logged in\n"), 0);
+         return false;
+    
+    }
     
     
     
@@ -112,6 +118,7 @@ while (read(openFD, &temp, sizeof(temp)) > 0)
     
    	   strcpy(temporary2.loginId, temp.loginId);
    	   strcpy(temporary2.password, temp.password);
+   	   add_session(temporary2.loginId);
    	   close(openFD);
    	   return true;
    	       
@@ -156,7 +163,11 @@ while (read(openFD, &temp, sizeof(temp)) > 0)
 
 
 
+void logout3(){
 
+   remove_session(temporary2.loginId);
+
+}
 
 
 
@@ -211,6 +222,12 @@ bool managerHandle(int clientSocket) {
                      "---------------------------------\n"
                      "Please select an option: ";
                      
+                     
+            
+                     
+                     
+               
+
         write(clientSocket, managerPrompt, strlen(managerPrompt));
 
         // readBytes stores the number of bytes read from the client by the server
@@ -252,6 +269,14 @@ bool managerHandle(int clientSocket) {
           case 7:
           	changePasswordCustomer(clientSocket);
           	//printf("activated\n");
+            break;
+            
+            
+         case 8:
+          	
+          	logout3();
+          	//printf("activated\n");
+          	return true;
             break;
           
            default:
@@ -423,14 +448,8 @@ struct employee my_emp, temp;
     close(openFD); // Close the file after use
     //printf("printed all the employee list\n");
     
-    
-    
-    
     // step2: Now the information regarding the employees are already given, it is now time to assign the employee employee for the loan
       
-    
-    
-    
     //printf("loan database\n");
     struct loan temp1;
     struct userCred t;
@@ -517,36 +536,9 @@ struct employee my_emp, temp;
     
     close(openFD);
     // calling function to make the employee assigned for loan to y
-    calling_to_make_applied_for_loan_to_y_on_employee(clientSocket,t.loginId);
-    
-    
-    
+    calling_to_make_applied_for_loan_to_y_on_employee(clientSocket,t.loginId); 
 
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
 
 
 
@@ -608,19 +600,6 @@ void remove_rejected_loan_application(int clientSocket){
    
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void reviewCustomerFeedback(int clientSocket){
 
@@ -715,32 +694,6 @@ void reviewCustomerFeedback(int clientSocket){
     
     
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void changePasswordManager(int clientSocket){
 
@@ -847,17 +800,6 @@ send(clientSocket, "No account found\n", strlen("No account found\n"),0);
     return;
        
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 void changePasswordEmployee(int clientSocket){
@@ -976,36 +918,6 @@ send(clientSocket, "No account found\n", strlen("No account found\n"),0);
     return;
        
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void changePasswordCustomer(int clientSocket){
     printf("\n");

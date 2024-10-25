@@ -2,12 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "header/bank_employee.h"
 
+
+//SESSIONS IMPLEMENTATION
+
+
+
 // Forward declarations for functions you need to define
+
 
 void handle_client(int clientSocket) {
     
@@ -29,26 +36,30 @@ void handle_client(int clientSocket) {
 
         bytes_received = read(clientSocket, buffer, sizeof(buffer));
 
+
         if (bytes_received <= 0) {
             break;  // Client disconnected or error occurred.
         }
-        
         buffer[bytes_received]='\0';
         int retIndex = atoi(buffer);
 
         switch (retIndex) {
             case 1:
                  	customerHandle(clientSocket);
+                 	
                 break;
             case 2:
                 	employeeHandle(clientSocket);
+                	
                 break;
            
             case 3:
                          managerHandle(clientSocket);
                 break;
             case 4:      
+            
                          adminHandle(clientSocket);
+                         
                 break;
                
             default:
@@ -57,6 +68,7 @@ void handle_client(int clientSocket) {
                 write(clientSocket, errorMsg, sizeof(errorMsg));
 
                 break;
+                
         }
     }
 
@@ -65,6 +77,10 @@ void handle_client(int clientSocket) {
 
 
 int main() {
+
+	initialize_shared_resources();
+    
+
         int server_socket, client_socket;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
@@ -134,5 +150,9 @@ int main() {
     }
 
     close(server_socket);
+    shmdt(activeSessions);
+    shmctl(shm_id, IPC_RMID, NULL);
+    semctl(sem_id, 0, IPC_RMID);
+    
     return 0;
 }
